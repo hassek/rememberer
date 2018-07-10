@@ -1,0 +1,2 @@
+dscl . list /Users UniqueID
+dscl . delete /Users/username

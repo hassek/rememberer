@@ -1,0 +1,20 @@
+# git help <command> to see the manual for that command
+
+git checkout stash@{0} -- onereceipt/dashboard/urls.py
+git fetch -p  # deletes all branches which doesn't exist remotely
+
+# when commiting in vim, if we exit vim with :cquit, it will not do the commit.
+
+# pull clone .gitmodules
+git config -f .gitmodules --get-regexp '^submodule\..*\.path$' |
+    while read path_key path
+    do
+        url_key=$(echo $path_key | sed 's/\.path/.url/')
+        url=$(git config -f .gitmodules --get "$url_key")
+        git submodule add $url $path
+    done
+
+# clean untracked files on git
+# https://til.hashrocket.com/posts/a4c09be4d0-clean-untracked-files-in-git
+git -dn (dry run)
+git -fd (delete)

@@ -1,0 +1,10 @@
+# xml format
+:silent %!xmllint --format -
+
+# if xml has errors
+:s/<[^>]*>/\r&\r/g
+:g/^$/d
+# and then \fef to ident
+
+# json format, be sure to replace all strings like u'name' --> "name"
+%!python -m json.tool

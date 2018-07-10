@@ -1,0 +1,177 @@
+Server Management Snippets
+
+GENERAL
+MONGO
+
+General
+
+python manage.py celeryd -Q slow -c 16
+python manage.py clean_pyc
+
+count number of requests:
+grep -c 'GET \/ HTTP' /var/log/nginx/access.log.1
+grep -c 'GET \/dashboard\/[? ]' /var/log/apache2/access.log.1
+grep -c 'GET.*mobile.*\/receipt\/' /var/log/apache2/access.log.1
+
+profiling:
+python -m cProfile -o profile.csv manage.py cluster
+import pstats; p = pstats.Stats('profile.csv')
+p.strip_dirs().sort_stats('cumulative').print_stats(10)
+http://www.huyng.com/posts/python-performance-analysis/
+ 
+log file locations:
+vi /var/log/apache2/error.log
+vi /var/log/celeryd.log
+vi /etc/init.d/celeryd
+vi /var/log/postgresql/postgresql-9.0-main.log
+vi /etc/postgresql/9.0/main/postgresql.conf
+
+ps -Af
+ps aauxw
+
+postgres commands:
+pg_dump -F c onereceipt > dump.dmp
+pg_restore -d onereceipt /data/backups/onereceipt.dump > /data/db/pg_restore.log
+sudo su postgres
+psql -c 'CREATE USER or_db1;'
+createdb -O or_db1 onereceipt
+
+if postgres refuses to start after restoring from a backup, zero out some log file data:
+su postgres
+dd if=/dev/zero of=/data/db/pg_clog/0726 bs=256k count=1
+
+map a postgres port to your local computer, so you can use pgadmin:
+ssh -L 5433:localhost:5432 root@db1.onereceipt.com
+
+build using a specific compiler:
+ARCHFLAGS="-arch i386 -arch x86_64" pip install -r ../misc/requirements.txt
+
+to resize an EBS volume: take snapshot, make EBS from snapshot, mount volume, 'xfs_growfs /data'
+to copy a folder between machines: (tar -cz db redis | nc -q 3 destinationIPaddress 9876 &)   and   (nc -l -d 9876 | tar -xzvf - > transfer.log &)
+to copy files: scp -C root@wizzy1.onereceipt.com:/home/web/OneReceipt/onereceipt/apps.txt apps.txt
+
+http://edvanbeinum.com/how-to-install-and-configure-supervisord
+
+SELECT procpid, client_addr, backend_start, query_start, current_query from pg_stat_activity order by backend_start
+
+import logging; logging.basicConfig(level=logging.INFO); logger = logging.getLogger();
+
+MONGO
+
+some queries:
+for (var user_id = 39400; user_id < 70000; user_id++) {
+    if (user_id % 100 == 0) {
+        print('user ' + user_id)
+    }
+    db.receipt.find({'user_id':user_id}, {_id: 1, message: 1, user_id: 1, domain: 1, 
+    order_id: 1}).forEach(function(receipt){
+        if (receipt.message && db.email.find({_id: receipt.message.$id}).count() == 0) {
+            print('missing ' + receipt._id + ' ' + receipt.domain + ' ' + 
+            	receipt.order_id);
+            db.receipt.update({_id: receipt._id}, {$set: {message: null} }, 0, 1)
+        }
+    })
+}
+
+db.printShardingStatus(verbose=true) 
+db.setProfilingLevel(1, 100)
+db.system.profile.find().sort({$natural:-1}).limit(10)
+
+db.getMongo().setSlaveOk()
+db.killOp('setC:18422574')
+
+var currents = db.currentOp().inprog; for (current in currents) {var process = currents[current]; if (process.secs_running > 5 && ! process.query.writebacklisten) print(printjson(process)); }
+
+setup replica set:
+mongo --port 10000
+config = {_id: 'setD', members: [
+                  {_id: 0, host: 'internal.mongo4.onereceipt.com:10000', priority: 2},
+                  {_id: 1, host: 'internal.mongo1.onereceipt.com:10003'},
+                  {_id: 2, host: 'internal.mongo2.onereceipt.com:10003', arbiterOnly: true}]
+}
+rs.initiate(config)
+
+db.getCollectionNames().forEach(function(coll){if (coll.indexOf('tmp.mr') == 0) { print(coll); db.runCommand({drop: coll}); } });
+
+setup sharding:
+mongo admin
+db.runCommand( { enablesharding : "onereceipt" } );
+db.runCommand( { shardcollection : "onereceipt.email", key : { user_id : 1 } });
+db.runCommand( { shardcollection : "onereceipt.receipt", key : { user_id : 1 } });
+db.runCommand( { addshard : "setD/internal.mongo4.onereceipt.com:10000]" } )
+
+pre-split:
+for ( var x=0; x<10; x++ ) { db.runCommand( { split :"onereceipt.email", middle : {user_id: x * 100 + 11600 } } ); }
+
+for ( var x=0; x<10; x++ ) { db.runCommand( { moveChunk : "onereceipt.email", find : { user_id : x * 100 + 11600 }, to : 'set' + 'ABC'[x%3] } ); }
+for ( var x=0; x<10; x++ ) { db.runCommand( { moveChunk : "onereceipt.email", find : { user_id : x * 100 + 11600 }, to : 'setD' } ); }
+
+use config
+db.settings.update({_id:"chunksize"}, {$set:{value:350}})
+db.settings.update( { _id: "balancer" }, { $set : { stopped: true } } , true );
+
+for (var user_id=38200; user_id <= 38400; user_id++) {
+	var count = db.email.find({"user_id":user_id},{_id:0,user_id:1}).count();
+	if (count >= 10000) {
+		print('user_id ' + user_id + ' has ' + count);
+	}
+}
+db.adminCommand({replSetStepDown : 120 })
+
+use admin
+db.runCommand( { split :"onereceipt.email", middle : {user_id: 26000} } );
+db.runCommand( { moveChunk : "onereceipt.email", find : { user_id : 26000 }, to : "setA" } )
+db.runCommand( { removeshard : "setD" } );
+
+this uses the index and does not scan the documents:
+db.email.find({user_id:11756},{_id:0,user_id:1}).count()
+
+copy data between servers:
+cd /data/mongo
+tar -cz config | nc -q 3 internal.mongo3.onereceipt.com 9876
+
+cd /data/mongo
+rm -R config
+nc -l -d 9876 | tar -xzvf -
+chown -R mongodb:mongodb config
+
+mkfs.xfs /dev/sdk
+mkdir /mnt1
+echo /dev/sdk   /mnt1   xfs  defaults,nobootwait,noatime   0    0 >> /etc/fstab
+mount /mnt1
+ps -Af | grep mongo
+mv /data/mongo/db_C /mnt1/db_C
+ctl-z, bg 1, disown
+ln -s /mnt1/db_C /data/mongo/db_C
+
+rm /data/mongo/db_A
+ln -s /mnt1/mnt1/db_A /data/mongo/db_A
+chown -R mongodb:mongodb /mnt1/mnt1/db_A
+
+staging unclean shutdown:
+sudo mongod --config /etc/mongodb.conf --repair
+sudo chown -R mongodb:mongodb /data/mongodb/
+
+monitor performance: mongostat -h localhost:10000
+
+db.receipt.find({was_parsed: true, message: {$exists: 1}, _id: {$gt: ObjectId('4f9ce082f49f3c071b000091')}}).forEach(function(r) {
+	print(r._id);
+	db.email.update({_id: r.message.$id, user_id: r.user_id}, {$set: {was_parsed:r.was_parsed}});
+})
+
+db.receipt.find({"items.name": {$regex: ".*(iphone|ipad).*", $options: "i"}}).forEach(function(r) {
+	r.items.forEach(function(item) {
+		var price = 0;
+		item.transactions.forEach(function(tran) {
+			if (tran.key == 'price') price = tran.value;
+		});
+		if (price > 90) print(item.name, price);
+	});
+});
+
+db.cache.update({key: /message_stats_for_.*/}, {$set: {expired: ISODate("2012-06-23")} }, false, true)
+
+db.receipt.find({ tracking_numbers: { $ne : [] } }).sort({$natural:-1}
+).limit(30).forEach(function (receipt) { receipt.tracking_numbers.forEach(
+function (detail) { if (detail.value == 'USPS Tracking Number') print(detail.key); }) })
+9102931507550000231478

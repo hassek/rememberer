@@ -1,0 +1,189 @@
+export PATH=/opt/local/bin:/opt/local/sbin:/usr/local/Cellar/ruby/2.3.1/bin:/usr/local/share/npm/bin:$PATH
+export PATH=/usr/local/bin:/usr/local/sbin:$PATH
+export PYTHONPATH=${PYTHONPATH}:$HOME/gsutil/boto:$HOME/gsutil:/usr/local/Cellar/xapian/1.2.7/bin:/usr/local/Cellar/readline/6.2.2/:
+
+export TERM=xterm-256color
+export CLICOLOR=1
+export LSCOLORS=ExFxCxDxBxegedabagacad
+
+if [ -f `brew --prefix`/etc/bash_completion ]; then
+   . `brew --prefix`/etc/bash_completion
+fi
+
+# Add this to your zshrc or bzshrc file
+_not_inside_tmux() {
+  [[ -z "$TMUX" ]]
+}
+
+ensure_tmux_is_running() {
+  if _not_inside_tmux; then
+    tat
+  fi
+}
+
+ensure_tmux_is_running
+
+# chruby conf
+RUBIES+=(
+  /usr/local/Cellar/ruby/2.3.1
+)
+
+# virtualenv installation
+VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
+export WORKON_HOME=$HOME/.virtualenvs
+source /usr/local/bin/virtualenvwrapper.sh
+
+#virtualenv aliases
+# http://blog.doughellmann.com/2010/01/virtualenvwrapper-tips-and-tricks.html
+export VSITEPACKAGE='`virtualenvwrapper_get_site_packages_dir`'
+alias v='workon'
+alias v.deactivate='deactivate'
+alias v.mk='mkvirtualenv -p /usr/local/bin/python2.7'
+alias v.mk3='mkvirtualenv -p /usr/local/bin/python3.5'
+alias v.rm='rmvirtualenv'
+alias v.switch='workon'
+alias v.add2virtualenv='add2virtualenv'
+alias v.cdsitepackages='cdsitepackages'
+alias v.cd='cdvirtualenv'
+alias v.lssitepackages='lssitepackages'
+alias gdmvim='mvim -p $(git diff --name-only)'
+alias rvim='mvim --remote-tab-silent'
+alias docker-wizzy='docker exec -it wizzy bash -l'
+
+
+#Git branch name
+#export PS1="\[\033[38m\]\u@\h\[\033[01;34m\] \w \[\033[31m\]\`ruby -e \"print (%x{git branch 2> /dev/null}.grep(/^\*/).first || '').gsub(/^\* (.+)$/, '(\1) ')\"\`\[\033[37m\]$\[\033[00m\] "
+### PS1 customization ####
+NONE="\[\033[0m\]"    # unsets color to term fg color
+
+# regular colors
+K="\[\033[0;30m\]"    # black
+R="\[\033[0;31m\]"    # red
+G="\[\033[0;32m\]"    # green
+Y="\[\033[0;33m\]"    # yellow
+B="\[\033[0;34m\]"    # blue
+M="\[\033[0;35m\]"    # magenta
+C="\[\033[0;36m\]"    # cyan
+W="\[\033[0;37m\]"    # white
+
+# emphasized (bolded) colors
+EMK="\[\033[1;30m\]"
+EMR="\[\033[1;31m\]"
+EMG="\[\033[1;32m\]"
+EMY="\[\033[1;33m\]"
+EMB="\[\033[1;34m\]"
+EMM="\[\033[1;35m\]"
+EMC="\[\033[1;36m\]"
+EMW="\[\033[1;37m\]"
+
+# background colors
+BGK="\[\033[40m\]"
+BGR="\[\033[41m\]"
+BGG="\[\033[42m\]"
+BGY="\[\033[43m\]"
+BGB="\[\033[44m\]"
+BGM="\[\033[45m\]"
+BGC="\[\033[46m\]"
+BGW="\[\033[47m\]"
+
+
+# displays only the last 25 characters of pwd
+set_new_pwd() {
+    # How many characters of the $PWD should be kept
+    local pwdmaxlen=25
+    # Indicate that there has been dir truncation
+    local trunc_symbol=".."
+    local dir=${PWD##*/}
+    pwdmaxlen=$(( ( pwdmaxlen < ${#dir} ) ? ${#dir} : pwdmaxlen ))
+    NEW_PWD=${PWD/#$HOME/\~}
+    local pwdoffset=$(( ${#NEW_PWD} - pwdmaxlen ))
+    if [ ${pwdoffset} -gt "0" ]
+    then
+        NEW_PWD=${NEW_PWD:$pwdoffset:$pwdmaxlen}
+        NEW_PWD=${trunc_symbol}/${NEW_PWD#*/}
+    fi
+}
+
+# set dirty flag (*)
+set_dirty() {
+    unset DIRTY
+    if git update-index -q --refresh 2>/dev/null; git diff-index --quiet --cached HEAD --ignore-submodules -- 2>/dev/null && git diff-files --quiet --ignore-submodules 2>/dev/null
+        then DIRTY=""
+    else
+      DIRTY="${EMR}(*)${NONE}"
+    fi
+}
+
+set_docker_name() {
+  unset DOCKER_NAME
+  if test $DOCKER_MACHINE_NAME
+    then
+      DOCKER_NAME="${EMG}docker:${NONE}$DOCKER_MACHINE_NAME "
+  fi
+}
+
+# the name of the git branch in the current directory
+set_git_branch() {
+    set_dirty
+
+    unset GIT_BRANCH
+    local branch=`git rev-parse --abbrev-ref HEAD 2> /dev/null`;
+    local branch_sha=`git rev-parse --short HEAD 2> /dev/null`
+
+    if test $branch
+        then
+            GIT_BRANCH="${EMG}git:${NONE}$branch ${G}[${EMK}$branch_sha${G}] ${DIRTY} "
+    fi
+}
+
+# revision of the svn repo in the current directory
+set_svn_rev() {
+    unset SVN_REV
+    local rev=`svn info 2> /dev/null | grep "Revision" | sed 's/Revision: \(.*\)/r\1 /'`;
+
+    if test $rev
+        then
+            SVN_REV="${EMG}svn:${NONE}$rev"
+    fi
+}
+
+# the name of the activated virtual env
+set_virtual_env_base() {
+    unset VIRTUAL_ENV_BASE
+    local venv=`basename "$VIRTUAL_ENV"`
+
+    if test $venv
+        then
+            VIRTUAL_ENV_BASE="${EMG}env:${NONE}$venv "
+    fi
+}
+
+update_prompt() {
+    set_new_pwd
+    set_git_branch
+    set_svn_rev
+    set_virtual_env_base
+    set_docker_name
+
+    PS1="${EMB}[${NONE}${NEW_PWD}${EMB}] ${VIRTUAL_ENV_BASE}${DOCKER_NAME}${SVN_REV}${GIT_BRANCH}${B}\$ ${NONE}"
+}
+
+PROMPT_COMMAND=update_prompt
+
+##
+# Your previous /Users/Tommy/.bash_profile file was backed up as /Users/Tommy/.bash_profile.macports-saved_2012-01-19_at_00:57:24
+##
+
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+
+fortune -e
+alias gs='git status'
+alias sf="cd ~/Websites/SokoFighter/sokofighter/ && workon sokofighter && clear"
+
+export JAVA_HOME="$(/usr/libexec/java_home)"
+export AWS_IAM_HOME="/usr/local/opt/aws-iam-tools/jars"
+export AWS_CREDENTIAL_FILE=$HOME/.aws-credentials-master
+export HOMEBREW_GITHUB_API_TOKEN="bc14e284bf892c21b8c70e203187a47e7c09f5ab"
+eval "$(docker-machine env dev)" || echo "please start the docker-machine by running: docker-machine start dev"
+
+test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"

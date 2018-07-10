@@ -1,0 +1,12 @@
+# enhances greatly the irb console
+pry
+
+# makes debugging a breeze like ipdb https://github.com/deivid-rodriguez/pry-byebug#matching-byebug-behaviour
+# to use, add a line "binding.pry" and the debugger will start there once it reaches that line.
+pry-byebug
+
+# needed to install Gemfiles
+bundler
+
+# for doc generation
+rdoc

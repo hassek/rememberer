@@ -1,0 +1,12 @@
+1.- What do you have your ham and spam thresholds set to? The defaults are 0.2 and 0.9, respectively, and should be reasonable starting points. They should not be close together (say, 0.4 and 0.6).
+2.- It is quite important that you have trained on roughly equal numbers of ham and spam (don't go above a 4::1 ratio, for example).
+3.- Have you trained on a reasonable number of hams and spams? You should train on 10 to 20 of each to start with just to get a decent base. After that, you should be able to train on just mistakes and messages classified as unsure.
+4.- Check to be sure you haven't made any classification mistakes (trained spams as hams or vice versa). If so, you could really confuse things and should move incorrectly classified messages to their correct locations and retrain (which may happen automatically, depending on how you're using SpamBayes).
+
+Words less than 3 characters long are skipped, and words greater than 12 characters long are converted into a special 'long-word' token. These numbers (3 and 12) were determined by brute force testing, and produced the best overall results (including compared to no upper or lower limits).
+
+---------- TRAINING ----------
+Don't use old mail. The characteristics of your email change over time, sometimes subtly, sometimes dramatically, so it's best to use very recent mail to train SpamBayes. If you've abandoned an email address in the past because it was getting spammed heavily, there are probably some clues in mail sent to your old address which would bias SpamBayes.
+Check and recheck your training collections. While you are manually classifying mail as spam or ham, it's easy to make a mistake and toss a message or ten in the wrong file. Such miscategorized mail will throw off the classifier.
+
+See here ---> http://www.entrian.com/sbwiki/TrainingIdeas  for the available training options 

@@ -1,0 +1,1 @@
+db.cache.remove({expired: {$lt: new Date()}})

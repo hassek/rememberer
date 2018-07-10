@@ -1,0 +1,4 @@
+pg_dump onereceipt -o -Fc > onereceipt.sql
+
+-o Keep ids so foreign keys keep working
+-Fc custom compressed format created by postgres (a lot faster and less size in the disk)

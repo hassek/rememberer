@@ -1,0 +1,2 @@
+copy from one remote server to another
+scp -v -3r <origin>:/data/mongo/config_bk <destiny>:/data/mongo/config^C

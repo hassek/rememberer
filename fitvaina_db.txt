@@ -1,0 +1,1 @@
+createdb fitvaina -Eutf-8 -Ofitvaina -W

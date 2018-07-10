@@ -1,0 +1,1 @@
+createdb bandnews -Eutf-8 -Obandnews -W

@@ -1,0 +1,36 @@
+[color]
+  ui = true
+[user]
+	name = Tomas Henriquez
+	email = nullwriter@gmail.com
+[core]
+	editor = /usr/bin/vim
+[github]
+	user = hassek
+[push]
+	default = simple
+[merge]
+  ff = only
+[fetch]
+  prune = true
+[credential]
+	helper = osxkeychain
+[alias]
+  b = branch
+  aa = add --all
+  ca = commit --amend
+  co = checkout
+  df = diff --word-diff --color-words
+  dfc = diff --word-diff --color-words --cached
+  la = log --oneline --decorate --graph --all -20
+  ri = rabase -i
+  wipe = reset --hard HEAD
+  branches = for-each-ref --sort=-committerdate --format=\"%(color:red)%(authorname)\t%(color:white)%(color:bold)%(refname:short)\t%(color:blue)%(authordate:relative)\" refs/remotes
+	glog = log -E -i --grep
+	graph = log --oneline --decorate --graph --all
+  hist = log --color --pretty=format:\"%C(yellow)%h%C(reset) %s%C(bold red)%d%C(reset) %C(green)%ad%C(reset) %C(blue)[%an]%C(reset)\" --relative-date --decorate
+  mup = !git checkout master && git pull && git checkout - # pull master and come back to current branch
+  unstage = reset HEAD --
+  uncommit = reset --soft HEAD^
+  compare = !hub compare
+  browse = !hub browse

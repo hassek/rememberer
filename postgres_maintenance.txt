@@ -1,0 +1,28 @@
+As far as Postgres DB maintenances are concerned, we use the following processes to keep it healthy.
+
+1. Enable Autovacuum at the DB level
+2. Perform bi-weekly “vacuumdb –avz” that vacuums and Analyzes the tables/indexes.
+3. Perform monthly pg_reorg of large tables and indexes that are known to cause bloating (due to heavy updates/deletes)
+4. Enable following parameters (and reload the config) and feed the DB logs to a tool called pgbadger to be able to identify long running SQL queries, highly popular Queries, Application connections/disconnections, etc.
+
+log_min_duration_statement = 0    # -1 is disabled, 0 logs all statements
+auto_explain.log_min_duration = 100ms
+log_rotation_size = 1GB
+log_connections = on
+log_disconnections = on
+
+5. Analyze Pgbadger reports with Development/QA/Engineering teams , create any missing indexes, create composite indexes, create partial indexes, etc.
+
+I could show you how to generate pgbadger reports that we find highly useful in tuning Postgres workload and offending SQLs.
+
+Here is an example of pgbadger command that I used to analyze top 100 SQLs using 4 parallel threads
+
+./pgbadger -j 4 -t 100 -f csv -d DBNAME `ls -t /stg_backup/pgbadger/postgresql-2015-11-17*csv` -o /stg_backup/pgbadger/DBNAME_pgbadger__report_20151117.html
+
+resize postgresql disk
+1.- resize on aws
+2.- install xfsprogs --> `sudo apt install xfsprogs`
+3.- run `sudo xfs_growfs -d /data`
+
+Format new disk from scratch
+sudo mkfs.xfs -L csv /dev/xvdh  # -L <disk_tag>

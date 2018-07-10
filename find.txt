@@ -1,0 +1,4 @@
+find . * -print
+
+# not really a find but it will show very nicely all files in a directory
+tree -C

@@ -1,0 +1,22 @@
+# git help log - to see the manual for that command
+
+# format my git log
+git log --pretty=format:'%C(yellow)%h%C(reset) - %an [%C(green)%ar%C(reset)] %s'
+
+# search for a commit with the regular expression
+# -E extended regular expression
+# -i case insensitive
+# looking for cache or caching
+git log -E -i --grep 'cach(e|ing)'
+
+# search for a modified code
+git log -S <string>
+
+# git log for a specific file
+git log -- <filename>
+
+# show all changes to a file
+git blame <filename>
+
+# show the commit changes to a file
+git show <commit hash>

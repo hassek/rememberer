@@ -1,0 +1,41 @@
+# switch pane location with previous
+<PREFIX> {
+<PREFIX> }
+
+# attach to a server session
+ssh my.server.com -t tmux attach-session
+
+# add keybinds
+tmux bind-key d split-window
+
+# write to tmux inside vim
+<PREFIX> :
+
+# zoom/unzoom a pane
+<PREFIX> z
+
+# go back to previous window
+<PREFIX> l
+
+# go back to previous session
+<PREFIX> L
+
+# open a pane with a process attached
+split-window -h "htop"
+
+# Add this to your zshrc or bzshrc file
+_not_inside_tmux() { [[ -z "$TMUX" ]] }
+
+ensure_tmux_is_running() {
+  if _not_inside_tmux; then
+    tat
+  fi
+}
+
+ensure_tmux_is_running
+
+# resize all panes equally
+tmux select-layout <even-horizontal, even-vertical, main-horizontal, main-vertical, or tiled>
+
+# paste
+<leader> ]  (i.e `Ctrl-b ]`)

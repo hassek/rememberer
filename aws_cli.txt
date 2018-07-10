@@ -1,0 +1,2 @@
+# remove all documents in a bucket
+aws s3 rm s3://<bucket_name> --recursive

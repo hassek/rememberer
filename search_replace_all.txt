@@ -1,0 +1,2 @@
+perl -pi -w -e 's/applicationX/applicationY/g;' *
+find . -type f -name '*.py' -exec sed -i '' s/email_proxy/slice_adapter/ {} +

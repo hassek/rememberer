@@ -1,0 +1,227 @@
+# This searches for get_*_status, takes the * word and inserts it in the replace
+%s/get_\(\w\+\)_status/fetch_\1_info/g
+
+# Ctrl - o, Ctrl - i -- Jumps back and forward
+
+# This will sort the file and delete duplicate lines automagically
+sort u
+
+# sort by last column parsed as a number
+%g/I COMMAND/norm!dd | %g/I SHARDING/norm!dd | %g/I CONTROL/norm!dd | %sort n /\<\S\+\>$/ r
+
+# search by what is not in a line
+:v/<anti-pattern>/p
+
+# current file
+ctrl-r %
+
+# navigate between tabs
+g-t and g-T
+
+# delete a sentence :help as
+das
+
+# delete a paragraph :help ap
+dap
+
+# add a nice line to the hearder like the above
+===============================================
+<leader>ul
+
+# show list of tags ctags
+g] or :ts
+
+# show list of commands
+q:
+
+# navigate through conflicts
+[c and ]c
+
+# write all the changes from target or merge when a conflict happens
+# stand into the target or merge file and run
+:Gwrite!
+
+# diff current file been edited from another branch
+# i.e. :Gdiff master:%
+:Gdiff <branch>:%
+
+# navigate over commits on fugitive using :Glog
+# this keybinds are provided by the unimpaired plugin
+# please check http://vimcasts.org/episodes/fugitive-vim-exploring-the-history-of-a-git-repository/ for more details
+[q --> cnext
+]q --> cprev
+[Q --> cfirst
+]Q --> clast
+
+# open all previous searches in a buffer
+q/
+
+# put current line in:
+zt --> top of visual buffer
+zz --> middle of the screen
+zb --> bottom of the screen
+
+# check :help text-objects for more goodies
+# format text object
+gq
+
+# select (inner paragraph)
+vip
+
+# select around paragraph
+vap
+
+# format inner paragraph
+gqip
+
+# reformat inside inner paragrah
+=ip
+
+# change inside parenthesis
+ci(
+
+# apply changes on all open panes
+:windo <command>
+
+# modify all panes and then save
+:windo %s/lewl/hehe/g | w
+
+# reset unsaved changes
+:windo e!
+
+# apply changes on all buffers
+:buffdo %s/lewl/hehe/g
+
+# check all keybinds maps
+:map
+
+# copy and paste specific range lines on cursor
+# t --> copy and paste
+# . --> paste on cursor
+:10,16t.
+
+# copy and paste lines between 10 and 16 at the beggining of the file
+:10,16t0
+
+# sort numbers by 1st column
+:%!sort -n -k 1
+
+# sort numbers by 3rd column
+:%!sort -n -k 3
+
+# sort range of text by 2nd colum
+:10,20!sort -k 2
+
+# get previous visual setup again
+gv
+
+# break lines to be readed
+set wrap lbr
+
+# see documentation
+S-k
+
+# insert characters in multiple lines
+Ctrl-v --> select block --> shift-i --> write characters --> esc
+
+# sorround word (instead of matching it with v)
+ysiw" (i.e. "name")
+
+# delete quotes
+ds"
+
+# delete until (not including) character
+dt<char>
+
+# delete backwards until first non white character
+d^
+
+# delete backwards until beggining of current word
+db
+
+# add lines
+[<space> or ]<space>
+
+# exchange text
+https://github.com/tommcdo/vim-exchange
+
+# vim text object plugins
+https://github.com/kana/vim-textobj-user/wiki
+
+# open a url on the browser (follow link)
+gx
+
+# Count highlighted words
+g-Ctrl-g
+
+# see a file version in another branch
+:Gsplit master:%
+
+# Sourround whole word with character
+ysiW<Char>
+
+i.e. null@gmail.com --> ysiW" --> "null@gmail.com"
+
+# Sourround whole line
+yss"
+
+# Create directories when saving a file
+:call mkdir(expand('%:h'), 'p')
+
+# delete from inner and paste
+"hola" --> "aloha"
+ci" <Ctrl-R> 0 <Esc>
+
+------
+START A WIKI
+ Vim Tips Wiki
+Vim Tips Wiki
+1,632
+PAGES
+ADD NEW PAGE
+COMMUNITY PORTAL
+TO DO
+EXPLORE
+in:
+VimTip, Todo
+Replace a word with yanked text
+EDIT
+ 
+SHARE
+Tip 605 Printable Monobook Previous Next
+created 2003 · complexity basic · author Yang Xiangyu · version 6.0
+
+A common requirement, particularly when programming, is to copy or delete text from one location, and use what was copied or deleted to replace text in one or more other locations. This tip describes how this operation is performed using standard Vim techniques, and with some tricks that may make it easier.
+
+Contents[show]
+How to copy/pasteEdit
+For simplicity, this shows how to copy a word and paste it over other words. However, the visual selection could be varied to use any text.
+
+yiw	Yank inner word (copy word under cursor, say "first").
+...	Move the cursor to another word (say "second").
+viwp	Select "second", then replace it with "first".
+...	Move the cursor to another word (say "third").
+viw"0p	Select "third", then replace it with "first".
+Copy a word and paste it over other words:
+
+yiw	Yank inner word (copy word under cursor, say "first").
+...	Move the cursor to another word (say "second").
+ciw Ctrl-R 0 Esc	Change "second", replacing it with "first".
+...	Move the cursor to another word (say "third").
+.	Repeat the operation (change word and replace it with "first").
+...	Move the cursor to another word and press . to repeat the change.
+Copy text in quotes, and paste it over other quoted text:
+
+yi"	Yank inner text (text containing cursor which is in quotes).
+...	Move the cursor to other quoted text.
+ci" Ctrl-R 0 Esc	Change the quoted text, replacing it with the copied text.
+...	Move the cursor to more quoted text.
+.	Repeat the operation (change the quoted text and replace it with the copy).
+...	Move the cursor to more quoted text and press . to repeat the change.
+Copy a line and paste it over other lines:
+
+yy	Yank current line (say "first line").
+...	Move the cursor to another line (say "second line").
+Vp	Select "second line", then replace it with "first line".
+...	Move the cursor to another line (say "third line").
+V"0p	Select "third line", then replace it with "first line".

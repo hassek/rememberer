@@ -1,0 +1,193 @@
+rs.status()  ----> check the status of the primary/secondaries/arbiter (check for errmsg specially to see if something is wrong)
+sh.status() ----> check shard status
+db.currentOp() ---> check current operation happening at the time
+db.killOp() ----> kill and opetation
+db.printSlaveReplicationInfo() ----> check how synced the replica sets are compared to the primary
+rs.conf() ----> see server configuration for master/slave priority
+
+cfg = rs.conf()
+cfg.members[0].priority = 0.5
+rs.reconfig(cfg)
+-----> reconfigure master/slave priorities
+
+db.collection.getIndexes()
+
+mongod --dbpath /data/mongo/db_A/ --repair --repairpath /mnt1/ --nojournal ---> repair a database that doesn't have enough space on their main disk to use another disk for it
+
+mount -o nouuid /dev/sdb7 disk-7  # in case there is an UUID conflict
+
+# A way to know a a detail stats on every collection
+"""
+db._adminCommand("listDatabases").databases.forEach(function (d) {
+mdb = db.getSiblingDB(d.name);
+printjson(d.name);
+printjson(mdb.stats());
+mdb.getCollectionNames().forEach(function(coll) {
+                        printjson(mdb.getCollection(coll));
+                        printjson(mdb.getCollection(coll).stats());
+        })
+}
+)
+"""
+
+mongo chunk details script
+"""
+AllChunkInfo = function(ns, shard){
+    var match = {'ns': ns};
+    if (typeof shard !== "undefined"){
+        match['shard'] = shard;
+    }
+    // this will return all chunks ordered by min
+    var chunks = db.getSiblingDB("config").chunks.find(match).sort({min:1});
+
+    // some counters for overall stats at the end
+    var totalChunks = 0;
+    var totalSize = 0;
+    var totalEmpty = 0;
+    var totalJumbo = 0;
+    // header row
+    print("ChunkID,Shard,Jumbo,ChunkSize,ObjectsInChunk");
+
+    // iterate over all the chunks, print out info for each
+    chunks.forEach(function(chunk){
+        // get the database we will be running the command against later
+        var db1 = db.getSiblingDB(chunk.ns.split(".")[0]);
+        // will need this for the dataSize call
+        var key = db.getSiblingDB("config").collections.findOne({_id:chunk.ns}).key;
+        // dataSize returns the info we need on the data, but using the estimate option to use counts is less intensive
+        var dataSizeResult = db1.runCommand({datasize:chunk.ns, keyPattern:key, min:chunk.min, max:chunk.max, estimate:true});
+        // uncomment to see how long it takes to run and status
+        // printjson(dataSizeResult);
+        var jumbo = 0;
+        if (typeof chunk.jumbo !== "undefined"){
+            jumbo = chunk.jumbo;
+        }
+        print(chunk._id+","+chunk.shard+","+jumbo+","+dataSizeResult.size+","+dataSizeResult.numObjects);
+
+        if (jumbo != 0) { totalJumbo++; }
+        totalChunks++;
+        totalSize += dataSizeResult.size;
+        //count empty chunks for summary
+        if (dataSizeResult.size == 0) { totalEmpty++; }
+    })
+    print("***********Summary Chunk Information***********");
+    print("Total Chunks: "+totalChunks);
+    print("Total Jumbo: "+totalJumbo);
+    print("Average Chunk Size (bytes): "+(totalSize/totalChunks));
+    print("Empty Chunks: "+totalEmpty);
+    print("Average Chunk Size (non-empty): "+(totalSize/(totalChunks-totalEmpty)));
+}
+AllChunkInfo('onereceipt.email_header', 'setA');
+AllChunkInfo('onereceipt.email_header', 'setB');
+AllChunkInfo('onereceipt.email_header', 'setC');
+AllChunkInfo('onereceipt.email_header', 'setD');
+AllChunkInfo('onereceipt.email_header', 'setE');
+AllChunkInfo('onereceipt.email_body', 'setA');
+AllChunkInfo('onereceipt.email_body', 'setB');
+AllChunkInfo('onereceipt.email_body', 'setC');
+AllChunkInfo('onereceipt.email_body', 'setD');
+AllChunkInfo('onereceipt.email_body', 'setE');
+AllChunkInfo('onereceipt.receipt', 'setA');
+AllChunkInfo('onereceipt.receipt', 'setB');
+AllChunkInfo('onereceipt.receipt', 'setC');
+AllChunkInfo('onereceipt.receipt', 'setD');
+AllChunkInfo('onereceipt.receipt', 'setE');
+"""
+
+KILL LONG QUERIES
+//Find
+db.currentOp({secs_running: {$gt: 300}})
+
+//Remove
+db.currentOp({secs_running: {$gt: 300}}).inprog.forEach(function(op){ db.killOp(op.opid); });
+
+// Find the logests array on an object
+db.receipt.aggregate( [
+  { $unwind : "$order_id" },
+  { $group : { _id : "$_id", len : { $sum : 1 } } },
+  { $sort : { len : -1 } },
+], {allowDiskUse: true} )
+
+// Print query result on a file
+// this line should be on a file.js
+printjson(db.receipt.find({_id: ObjectId("50693c905f81e10779000045")}).next())
+
+mongo onereceipt file.js > out.js
+
+# This is a great site with lots of usefull examples for the db.currentOp() command.
+http://docs.mongodb.org/manual/reference/method/db.currentOp/#currentop-examples
+
+//Check recent chunk migrations by setting the minutes you want to see
+var veryRecent = function (minutes, configDB) {
+    if (configDB === undefined)
+        configDB = sh._getConfigDB();
+    var yesterday = 0;
+    if (minutes) {
+      yesterday = new Date( new Date - minutes * 60 * 1000);
+    } else {
+      var yesterday = new Date( new Date() - 2 * 60 * 1000 );
+    }
+
+    // Successful migrations.
+    var result = configDB.changelog.aggregate([
+        {
+            $match: {
+                time: { $gt: yesterday },
+                what: "moveChunk.from",
+                'details.errmsg': { $exists: false },
+                'details.note': 'success'
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    msg: "$details.errmsg"
+                },
+                count : { $sum: 1 }
+            }
+        },
+        {
+            $project: {
+                _id: { $ifNull: [ "$_id.msg", "Success" ] },
+                count: "$count"
+            }
+        }
+    ]).toArray();
+
+    // Failed migrations.
+    result = result.concat(configDB.changelog.aggregate([
+        {
+            $match: {
+                time: { $gt: yesterday },
+                what : "moveChunk.from",
+                $or: [
+                    { 'details.errmsg': { $exists: true }},
+                    { 'details.note': { $ne: 'success' }}
+                ]
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    msg: "$details.errmsg",
+                    from : "$details.from",
+                    to: "$details.to"
+                },
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $project: {
+                _id: { $ifNull: [ '$_id.msg', 'aborted' ]},
+                from: "$_id.from",
+                to: "$_id.to",
+                count: "$count"
+            }
+        }
+    ]).toArray());
+
+    return result;
+}
+
+# remove all post-cleanup files
+cd /data/mongo/ && find . -name post-cleanup.* -exec rm {} \;

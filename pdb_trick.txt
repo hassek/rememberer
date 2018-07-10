@@ -1,0 +1,46 @@
+python comes with command line debugger pdb which is a rough, but useful, tool for Python developers.
+
+You can insert source code breakpoints by adding into your code.
+
+import pdb ; pdb.set_trace()
+
+and next time the code is run an interactive pdb prompts opens in your terminal window.
+
+Google App Engine captures stdout and stdin system input and output streams for its internal purposes. Since pdb relies on them, pdb cannot be directly opened in App Engine. You cannot open pdb at all on the App Engine production server, as the server is little bit special due to scalability goals (no raw file system, terminal access).
+
+However, you can still open pdb() on your local App Engine development server with the following little trick:
+
+def dbg():
+ """ Enter pdb in App Engine
+
+ Renable system streams for it.
+ """
+ import pdb
+ import sys
+ pdb.Pdb(stdin=getattr(sys,'__stdin__'),stdout=getattr(sys,'__stderr__')).set_trace(sys._getframe().f_back)
+
+This will grab the real system input and output stream, launch pdb() with them and step back one stack frace before calling dbg(). So you can simply add a breakpoint to your App Engine like the following:
+
+class MainPage(BasePage):
+ """ Index page of the site.
+
+ """
+
+ def get(self):
+   logging.debug("Loading main page")
+   path = os.path.join(os.path.dirname(__file__), 'index.html')
+   vars = self.get_vars()
+   dbg() # inspect what template variables are being passed to the template
+   self.response.out.write(template.render(path, vars))
+
+(Pdb) b message/datamapper:365
+Breakpoint 1 at /home/web/OneReceipt/onereceipt/message/datamapper.py:365
+
+(Pdb) commands  # command to be applied to all breaks
+(com) silent  # makes it not print the break message
+(com) print message.sent_from, message.subject
+(com) c  # continues without stopping on break
+
+(Pdb) b message/datamapper:365
+Breakpoint 1 at /home/web/OneReceipt/onereceipt/message/datamapper.py:365
+ignore 1 10  <--- This will make the breakpoint be ignored until is pass trough it 10 times

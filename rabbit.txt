@@ -1,0 +1,22 @@
+rabbitctl stop
+rabbitctl list_queues -p rabbit //list queues from rabbit vhost
+rabbitctl set_vm_memory_high_watermark <fraction> (0.6) //Change amount of memory for rabbit
+rabbitctl list_connections 
+
+./manage.py celeryctl inspect active_queues
+./manage.py celery amqp queue.purge slow
+
+# remove unwanted queues, requires the management plugin to be installed
+rabbitmqctl list_queues -p vhost_name |\  # list queues
+grep -v "fast\|medium\|slow" |\  # filter queue names that we don't want to delete
+tr "[:blank:]" " " |\  # normalize the delimiter in the list_queues print
+cut -d " " -f 1 |\  # pick the name of the queue (first column) removing the queue tasks number
+xargs -I {} curl -i -u guest:guest -H "content-type:application/json" -XDELETE
+http://localhost:15672/api/queues/<vhost_name>/{}  # delete
+
+# http://stackoverflow.com/questions/6742938/deleting-queues-in-rabbitmq/40109514
+rabbitmqctl list_queues -p vhost_name | grep -v "fast\|medium\|slow|celery" | tr "[:blank:]" " " | cut -d " " -f 1 | xargs -I {} curl -i -u guest:guest -H "content-type:application/json" -XDELETE
+http://localhost:15672/api/queues/<vhost_name>/{}
+
+# check queues on rabbitmqctl
+sudo rabbitmqctl list_queues -p rabbit name messages_ready messages_unacknowledged

@@ -1,0 +1,1 @@
+git add -u #to add only deletes\ngit add -A to add modified and deletes at once

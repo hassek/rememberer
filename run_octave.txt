@@ -1,0 +1,1 @@
+exec '/Applications/Octave.app/Contents/Resources/bin/octave'

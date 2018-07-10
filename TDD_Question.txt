@@ -1,0 +1,116 @@
+__UPDATE 08-07-2012__
+
+I can tell you my practices for unit testing that are working pretty well for my own ends and I'll give you my reasons:
+
+1.- Use [Fixtures](https://docs.djangoproject.com/en/dev/howto/initial-data/) only for information that is necessary for testing but is not going to change, for example, you need a user for every test you do so use a __base__ fixture to create users. 
+
+2.- Use a factory to create your objects, I personally love [FactoryBoy](https://github.com/dnerdy/factory_boy) (this comes from FactoryGirl which is a ruby library). I create a separate file called factories.py for every app where I save all these objects. This way I keep off the test files all the objects I need which makes it a lot more readable and easy to maintain. The cool thing about this approach is that you create a base object that can be modified if you want to test something else based on some object from the factory. Also it doesn't depend on django so when I migrated these objects when I started using mongodb and needed to test them, everything was smooth. Now after reading about factories it's common to say "Why would I want to use fixtures then". Since these fixtures should never change all the extra goodies from factories are sort of useless and django supports fixtures very well out of the box.
+
+3.- I [Mock](http://labix.org/mocker/) calls to external services, because these calls make my tests very slow and they depend on things that have nothing to do with my code being right or wrong. for example, if I tweet within my test, I do test it to tweet rightly, copy the response and mock that object so it returns that exact response every time without doing the actual call. Also sometimes is good to test when things go wrong and mocking is great for that.
+
+4.- I use an integration server ([jenkins](http://en.wikipedia.org/wiki/Jenkins_(software)) is my recommendation here) which runs the tests every time I push to my staging server and if they fail it sends me an email. This is just great since it happens to me a lot that I break something else in my last change and I forgot to run the tests. It also gives you other goodies like a coverage report, [pylint](http://www.logilab.org/857/)/[jslint](http://www.jslint.com/)/[pep8](http://www.python.org/dev/peps/pep-0008/) verifications and there exists a lot of plugins where you can set different statistics.
+
+
+
+About your question for testing front end, django comes with some [helper functions](https://docs.djangoproject.com/en/dev/topics/testing/?from=olddocs#module-django.test.client) to handle this in a basic way.
+
+This is what I personally use, you can fire gets, posts, login the user, etc. that's enough for me. I don't tend to use a complete front end testing engine like selenium since I feel it's an overkill to test anything else besides the business layer. I am sure some will differ and it always depends on what you are working on.
+
+Besides my opinion, django 1.4 comes with a very handy [integration](https://docs.djangoproject.com/en/dev/topics/testing/?from=olddocs#django.test.LiveServerTestCase) for in-browser frameworks.
+
+I'll set an example app where I can apply this practices so it is more understandable. Let's create a very basic blog app:
+
+__structure__
+
+    blogger/
+        __init__.py
+        models.py
+        fixtures/base.json
+        factories.py
+        tests.py
+
+   
+__models.py__
+
+     from django.db import models
+
+     class Blog(models.Model):
+         user = models.ForeignKey(User)
+         text = models.TextField()
+         created_on = models.DateTimeField(default=datetime.now())
+
+__fixtures/base.json__
+
+    [
+    {
+        "pk": 1,
+        "model": "auth.user",
+        "fields": {
+            "username": "fragilistic_test",
+            "first_name": "demo",
+            "last_name": "user",
+            "is_active": true,
+            "is_superuser": true,
+            "is_staff": true,
+            "last_login": "2011-08-16 15:59:56",
+            "groups": [],
+            "user_permissions": [],
+            "password": "IAmCrypted!",
+            "email": "test@email.com",
+            "date_joined": "1923-08-16 13:26:03"
+        }
+    }
+    ]
+
+
+__factories.py__
+
+    import factory
+    from blog.models import User, Blog
+
+    class BlogFactory(factory.Factory):
+        FACTORY_FOR = Blog
+
+        user__id = 1
+        text = "My test text blog of fun"
+
+__tests.py__
+     
+    class BlogTest(TestCase):
+        fixtures = ['base']  # loads fixture
+
+        def setUp(self):
+            self.blog = BlogFactory()
+            self.blog2 = BlogFactory(text="Another test based on the last one")
+
+        def test_blog_text(self):
+            self.assertEqual(Blog.objects.filter(user__id=1).count(), 2)
+
+        def test_post_blog(self):
+            # Lets suppose we did some views
+            self.client.login(username='user', password='IAmCrypted!')
+            response = self.client.post('/blogs', {'text': "test text", user='1'})
+
+            self.assertEqual(response.status, 200)
+            self.assertEqual(Blog.objects.filter(text='test text').count(), 1)
+
+        def test_mocker(self):
+            # We will mock the datetime so the blog post was created on the date
+            # we want it to
+            mocker = Mock()
+            co = mocker.replace('datetime.datetime')
+            co.now()
+            mocker.result(datetime.datetime(2012, 6, 12))
+
+            with mocker:
+                res = Blog.objects.create(user__id=1, text='test')
+            
+            self.assertEqual(res.created_on, datetime.datetime(2012, 6, 12))
+           
+        def tearDown(self):
+            # Django takes care of this but to be strict I'll add it
+            Blog.objects.all().delete()
+
+Notice I am using some specific technology for the sake of the example (which haven't been tested btw).
+
+I have to insist, this may not be the standard best practice (which I doubt it exists) but it is working pretty well for me.

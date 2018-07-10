@@ -1,0 +1,14 @@
+# Remove all tasks by name
+# Reference: http://docs.celeryproject.org/en/latest/reference/celery.events.state.html
+query = celery.events.state.tasks_by_type(your_task_name)
+
+# Kill tasks
+# Reference: http://docs.celeryproject.org/en/latest/userguide/workers.html#revoking-tasks
+for uuid, task in query:
+    celery.control.revoke(uuid, terminate=True)
+
+# remove all tasks from a queue
+./manage.py celery amqp queue.purge
+
+# a range of queues
+for i in {1..25}; do ./manage.py celery amqp queue.purge related_$i; done

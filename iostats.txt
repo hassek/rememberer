@@ -1,0 +1,4 @@
+ iotop -aoP
+-a    Will show accumulated output
+-o    Will only output
+-P    Will only show processes instead of threads

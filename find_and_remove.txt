@@ -1,0 +1,1 @@
+find . -name post-cleanup.* -exec rm {} \;

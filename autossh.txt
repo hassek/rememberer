@@ -1,0 +1,11 @@
+#localhost
+autossh -M 9010 -p22 -fL 8822:localhost:9000 onereceipt@staging.onereceipt.com -N & autossh -M 9020 -p22 -fL 8823:localhost:9001 onereceipt@staging.onereceipt.com -N & autossh -M 9040 -p22 -fL 8824:localhost:9002 onereceipt@staging.onereceipt.com -N
+
+#web1
+#autossh -M 9010 -R *:9000:localhost:22 onereceipt@staging.onereceipt.com -N &
+
+#broker1
+#autossh -M 9020 -R *:9001:localhost:22 onereceipt@staging.onereceipt.com -N &
+
+#wrk1
+#autossh -M 9030 -R *:9002:localhost:22 onereceipt@staging.onereceipt.com -N &

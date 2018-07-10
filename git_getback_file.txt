@@ -1,0 +1,1 @@
+git checkout HEAD^ onereceipt/registration/migrations/__init__.py

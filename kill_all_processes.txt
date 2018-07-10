@@ -1,0 +1,3 @@
+# The good part of a killall command
+# check this SO question: http://stackoverflow.com/questions/8987037/how-to-kill-all-processes-with-a-given-partial-name
+pkill -f pattern

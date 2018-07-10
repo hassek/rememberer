@@ -1,0 +1,8 @@
+class DisableLogger():
+    def __enter__(self):
+        logging.disable(logging.INFO)
+    def __exit__(self, a, b, c):
+        logging.disable(logging.NOTSET)
+
+with DL():
+  do_whatever()

@@ -1,0 +1,1 @@
+rsync -rP -e 'ssh -p8022' AFILE Tommy@tomtom85.gotdns.com:

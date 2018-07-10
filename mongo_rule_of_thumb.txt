@@ -1,0 +1,31 @@
+"First class" objects, that are at top level, typically have their own collection.
+Line item detail objects typically are embedded.
+Objects which follow an object modelling "contains" relationship should generally be embedded.
+Many to many relationships are generally done by linking.
+Collections with only a few objects may safely exist as separate collections, as the whole collection is quickly cached in application server memory.
+Embedded objects are a bit harder to link to than "top level" objects in collections.
+It is more difficult to get a system-level view for embedded objects. When needed an operation of this sort is performed by using MongoDB's map/reduce facility.
+If the amount of data to embed is huge (many megabytes), you may reach the limit on size of a single object. See also GridFS.
+If performance is an issue, embed.
+
+
+# Chunk Balancer analysis
+the config database has information about the balancer locks
+
+mongo config
+db.locks.find()
+
+# state 2 means the balancer is running
+# state 0 means the balancing is finished
+
+You can see the balancer thread running by filtering by:
+db.currentOp({desc: "migrateThread"})
+
+If there is a restart on all mongos, the balancer lock may get stranded, fix it by:
+db.locks.update({_id: "balancer"}, {$set: {state: 0}})  #releasing the balancer
+
+and restart all mongos
+
+
+Because mongodb is all javascript you can see the function codes by just typing them without the ()
+`sh.startBalancer` will print the whole function with what it does.

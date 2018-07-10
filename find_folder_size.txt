@@ -1,0 +1,7 @@
+# Find size of all folders ordered
+du -cmh -d 1 | sort -n
+
+du -hs * | sort -h
+
+# Find size of all files ordered
+ls -lhS

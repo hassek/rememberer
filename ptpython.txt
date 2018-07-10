@@ -1,0 +1,3 @@
+# ptpython lets you use vi on a python shell and it comes with other handy tools like checking history and pasting
+# example config file: https://github.com/jonathanslenders/ptpython/blob/master/examples/ptpython_config/config.py
+pip install ptpython
