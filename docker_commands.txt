@@ -7,13 +7,18 @@ docker run -d -P --name=db1 -d onereceipt/postgres-dev
 # build an image
 docker build -t onereceipt/postgres-dev .
 
-# remove dangling images
-docker images -f "dangling=true" -q | xargs docker rmi
-or
-docker rmi $(docker images -f "dangling=true" -q)
+# cleanup docker
+docker system prune -a -f
 
 # run docker container with interactive shell (perfect for ipdb use)
 docker-compose run --service-port wizzy
 
 # run a command on the container
 docker-compose run wizzy python OneReceipt/onereceipt/manage.py shell_plus
+
+# run postgres accessible from host with docker only
+docker run --rm --publish 5432:5432 --name postgres -d postgres:9.4-alpine
+docker exec -it postgres bash
+su postgres
+createuser -s -W onereceipt
+createdb onereceipt -O onereceipt

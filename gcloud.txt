@@ -1,0 +1,8 @@
+# Change project been worked on
+gcloud config set project PROJECT_ID
+
+# Authenticate to a new project
+gcloud auth login --project PROJECT_ID
+
+# Setup kubernetes context
+gcloud container clusters get-credentials worker

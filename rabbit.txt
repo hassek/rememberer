@@ -1,7 +1,7 @@
-rabbitctl stop
-rabbitctl list_queues -p rabbit //list queues from rabbit vhost
-rabbitctl set_vm_memory_high_watermark <fraction> (0.6) //Change amount of memory for rabbit
-rabbitctl list_connections 
+rabbitmqctl stop
+rabbitmqctl list_queues -p rabbit //list queues from rabbit vhost
+rabbitmqctl set_vm_memory_high_watermark <fraction> (0.6) //Change amount of memory for rabbit
+rabbitmqctl list_connections 
 
 ./manage.py celeryctl inspect active_queues
 ./manage.py celery amqp queue.purge slow
@@ -20,3 +20,19 @@ http://localhost:15672/api/queues/<vhost_name>/{}
 
 # check queues on rabbitmqctl
 sudo rabbitmqctl list_queues -p rabbit name messages_ready messages_unacknowledged
+
+# close rabbitmq connections from a specific source
+sudo rabbitmqctl list_connections -p rabbit pid | grep -v "\.\.\." | xargs -I{} sudo rabbitmqctl close_connection "{}" "Closing orphan connection"
+
+# or by peer_host ip (worker host)
+sudo rabbitmqctl list_connections -p rabbit peer_host pid | grep <worker_host_ip> | tr "[:blank:]" " " | cut -d " " -f 2 | xargs -I{} sudo rabbitmqctl close_connection "{}" "Closing orphan connection"
+
+# add rabbitmq admin
+curl -S http://localhost:15672/cli/rabbitmqadmin > /usr/local/bin/rabbitmqadmin
+
+# declare queues and exchanges
+sudo rabbitmqadmin declare exchange -V rabbit name=<exchange-name> type=x-consistent-hash -u <user> -p <pwd>
+for i in $(seq 4); do sudo rabbitmqadmin declare queue -V rabbit name=<queue-name>.$i  -u <user> -p <pwd>; done
+for i in $(seq 4); do sudo rabbitmqadmin declare binding -V rabbit source=<exchange-name> destination=<queue-name>.$i routing_key="1" -u <user> -p <pwd>; done
+
+# we can handle master queue location by `x-queue-master-locator` when declaring the queue or by using the `queue_master_locator` on a policy or configuration file.

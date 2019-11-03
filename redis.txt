@@ -1,0 +1,5 @@
+# delete pattern
+redis-cli --scan -n 1 --pattern history_id:lock:* | xargs -I{} redis-cli -n 1 del "{}"
+
+# expire all matching keys
+redis-cli -n 1 --scan --pattern history_id:* | xargs -I{} echo "EXPIRE {} 86400" | redis-cli -n 1 --pipe

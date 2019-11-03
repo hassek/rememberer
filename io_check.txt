@@ -1,0 +1,21 @@
+tomas@use1b-broker1:~$ sar -d -p 5 2
+Linux 4.4.0-1079-aws          07/19/2019      _x86_64_        (8 CPU)
+
+04:32:08 AM       DEV       tps  rd_sec/s  wr_sec/s  avgrq-sz  avgqu-sz     await     svctm     %util
+04:32:13 AM      xvda    178.60      0.00   8905.60     49.86      2.40     13.43      5.59     99.92
+
+04:32:13 AM       DEV       tps  rd_sec/s  wr_sec/s  avgrq-sz  avgqu-sz     await     svctm     %util
+04:32:18 AM      xvda    171.60      0.00   8107.20     47.24      2.28     13.30      5.82     99.84
+
+Average:          DEV       tps  rd_sec/s  wr_sec/s  avgrq-sz  avgqu-sz     await     svctm     %util
+Average:         xvda    175.10      0.00   8506.40     48.58      2.34     13.36      5.70     99.88
+
+The TPS is the equivalent to measure the IOPS happening, in this particular case, IOPS of the disk is 150, so by been over it, we have a clear sign we are in trouble here.
+The %util means how much CPU is been used. Device saturation occurs when this value is close to 100% for devices serving requests serially
+avgrq-sz --> Average size of the requests (in sectors)
+avgqu-sz --> Average length of the queue of requests
+await --> The average time (in milliseconds) for I/O requests issued to the device to be served. This includes the time spent by the requests in queue and the time spent servicing them.
+svctm --> Ignore this field, the documentation says it will be removed.
+
+
+iostat -x 5

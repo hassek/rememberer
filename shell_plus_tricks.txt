@@ -1,0 +1,3 @@
+
+# Prints all sql executed raw 
+./manage.py shell_plus --print-sql

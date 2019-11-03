@@ -1,0 +1,54 @@
+Setup redis 5.X
+
+sudo su
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo "echo never > /sys/kernel/mm/transparent_hugepage/enabled" >> /etc/rc.local
+echo "vm.overcommit_memory = 1" >> /etc/sysctl.conf
+sysctl vm.overcommit_memory=1
+sysctl -w net.core.somaxconn=1024
+
+apt install build-essential tcl
+
+$ wget http://download.redis.io/releases/redis-5.0.3.tar.gz
+$ tar xzf redis-5.0.3.tar.gz
+$ cd redis-5.0.3
+$ make
+
+cd deps
+make hiredis jemalloc linenoise lua
+cd ..
+make
+make test
+make install
+
+sudo mkdir /etc/redis
+sudo chown redis:redis /etc/redis
+sudo cp redis.conf /etc/redis/
+
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-redis-on-ubuntu-16-04
+
+———————
+
+* sudo apt-get update
+* sudo apt-get install build-essential tcl
+
+curl -O http://download.redis.io/redis-stable.tar.gz
+tar xzvf redis-stable.tar.gz
+cd redis-stable
+make
+make test
+sudo make install
+sudo mkdir /etc/redis
+sudo cp /tmp/redis-stable/redis.conf /etc/redis
+
+Add to `bind` the machine ip address (if you want it to be accessible from outside)
+Change `dir` to `/var/lib/redis` so we save the redis database there
+￼
+
+￼
+
+sudo adduser --system --group --no-create-home redis
+sudo mkdir /var/lib/redis
+sudo chown redis:redis /var/lib/redis
+sudo chmod 770 /var/lib/redis
