@@ -36,3 +36,12 @@ for i in $(seq 4); do sudo rabbitmqadmin declare queue -V rabbit name=<queue-nam
 for i in $(seq 4); do sudo rabbitmqadmin declare binding -V rabbit source=<exchange-name> destination=<queue-name>.$i routing_key="1" -u <user> -p <pwd>; done
 
 # we can handle master queue location by `x-queue-master-locator` when declaring the queue or by using the `queue_master_locator` on a policy or configuration file.
+
+To move a queue to another cluster node, we can add a policy:
+pattern should match the node name i.e.: ^my.queue.name$
+Apply to: queues
+priority: 100
+ha-mode: nodes
+ha-params: Add the node name, type should be list. i.e.: rabbit@my.node.name
+
+
