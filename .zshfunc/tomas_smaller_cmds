@@ -1,0 +1,22 @@
+# No arguments: `git status`
+# With arguments: acts like `git`
+g() {
+  if [[ $# > 0 ]]; then
+	git $@
+  else
+	git status
+  fi
+}
+
+# Complete g like git
+compdef g=git
+
+# found on http://stackoverflow.com/questions/36513310/how-to-get-a-gits-branch-with-fuzzy-finder
+is_in_git_repo() {
+  git rev-parse HEAD > /dev/null 2>&1
+}
+
+fuzzy_git_branch() {
+  is_in_git_repo &&
+  git branch --color=always | grep -v '/HEAD\s' | grep -v "*" | fzf-tmux -d 40% --ansi --multi --tac | xargs git checkout
+}

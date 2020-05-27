@@ -44,4 +44,6 @@ priority: 100
 ha-mode: nodes
 ha-params: Add the node name, type should be list. i.e.: rabbit@my.node.name
 
-
+# list consumers and grep then close connection
+sudo rabbitmqctl list_consumers | grep <app-name>
+sudo rabbitmqctl close_connection "<connection-pid>" "Closing orphan connection"

@@ -1,0 +1,60 @@
+# PROMPT Functions
+function set_dirty() {
+	unset DIRTY
+	if git update-index -q --refresh 2>/dev/null; git diff-index --quiet --cached HEAD --ignore-submodules -- 2>/dev/null && git diff-files --quiet --ignore-submodules 2>/dev/null
+		then DIRTY=""
+	else
+	  DIRTY="%{$fg[red]%}*%{$reset_color%}"
+	fi
+}
+
+function git_prompt() {
+	set_dirty
+
+	unset GIT_BRANCH
+	local branch=`git rev-parse --abbrev-ref HEAD 2> /dev/null`;
+	local branch_sha=`git rev-parse --short HEAD 2> /dev/null`
+
+	if test $branch
+	then
+	  git_prompt="%{$fg[green]%}g:%{$reset_color%}$branch %{$fg[green]%}[%{$fg_bold[black]%}$branch_sha${DIRTY}%{$fg[green]%}]"
+	else
+	  unset git_prompt
+	fi
+}
+
+function virtual_env_prompt() {
+	local venv=`basename "$VIRTUAL_ENV"`
+
+	if test $venv
+	then
+	  env="%{$fg[green]%}e:%{$reset_color%}$venv "
+	else
+	  unset env
+	fi
+}
+
+function docker_prompt() {
+  if test $DOCKER_MACHINE_NAME
+  then
+    docker_name="%{$fg[green]%}d:%{$reset_color%}$DOCKER_MACHINE_NAME "
+  else
+    unset docker_name
+  fi
+}
+
+function kube_prompt() {
+  if grep -q "gke" <<< $(kubectl config current-context); then
+    local kcontext=`kubectl config current-context | cut -d'_' -f4`
+  else
+    local kcontext=`kubectl config current-context| rev |cut -d'-' -f1|cut -d'/' -f1 | rev`;
+  fi
+
+  local kns=`kubectl config view --minify --output 'jsonpath={..namespace}'`
+  if test $kcontext
+  then
+    kctx="%{$fg[green]%}k:%{$reset_color%}$kcontext:$kns "
+  else
+    unset kube_prompt
+  fi
+}
