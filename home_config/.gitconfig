@@ -1,0 +1,51 @@
+[color]
+  ui = true
+[user]
+	name = Tomas Henriquez (Hassek)
+	email = nullwriter@gmail.com
+[core]
+	editor = /usr/local/bin/vim
+	excludesfile = /Users/thenriquez/.gitignore_global
+[github]
+	user = hassek
+[push]
+	default = simple
+[merge]
+  ff = only
+[fetch]
+  prune = true
+[credential]
+  helper = osxkeychain
+[alias]
+  aa = add --all
+  br = branch
+  bprune = git branch --merged | grep -v "master" | xargs -I{} git branch -d {}
+  brprune = git branch -r --merged | grep -v "master" | sed -e "s/origin\\///" | xargs -I{} git push origin :{}
+  branches = for-each-ref --sort=-committerdate --format=\"%(color:red)%(authorname)\t%(color:white)%(color:bold)%(refname:short)\t%(color:blue)%(authordate:relative)\" refs/remotes
+  browse = !hub browse
+  ca = "!git add --all && git commit --amend --no-edit"
+  co = checkout
+  gfull = log --format=fuller
+  compare = !hub compare
+  df = diff --word-diff --color-words
+  dfc = diff --word-diff --color-words --cached
+  glog = log -E -i --grep
+  gr = log --oneline --decorate --graph --all
+  graph = log --oneline --decorate --graph --all
+  hist = log --color --pretty=format:\"%C(yellow)%h%C(reset) %s%C(bold red)%d%C(reset) %C(green)%ad%C(reset) %C(blue)[%an]%C(reset)\" --relative-date --decorate
+  la = log --oneline --decorate --graph --all -20
+  al = "!git config -l | grep alias | cut -c 7-"
+  mup = !git checkout master && git pull && git checkout - # pull master and come back to current branch
+  ri = "!f(){ git mup ; git rebase -i $1 ; }; f"
+  wipe = reset --hard HEAD
+  dt = "!f(){ : git branch ; git pull ; git branch -d $1 ; git push origin :$1 ; }; f"
+  # Compare commits from two branches
+  grdf = "!f(){ : git branch ; git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative $1... ; }; f"
+[log]
+	abbrevCommit = true
+[format]
+	pretty = oneline
+[diff "sopsdiffer"]
+	textconv = sops -d
+[url "git@github.com:"]
+	insteadOf = https://github.com/
