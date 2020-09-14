@@ -1,0 +1,14 @@
+#!/bin/sh
+# Git create new branch and setup upstream right away
+set -e
+
+git fetch -p
+git co -b $1
+git push --set-upstream origin $1
+
+# commented until we figure out a better way to avoid annoying pushes
+#if [[ -n $2 ]]; then
+  #git push --set-upstream origin $1:$2/tomas-$1
+#else
+  #git push --set-upstream origin $1:tomas-$1
+#fi

@@ -7,3 +7,5 @@ The list of files is as follows:
 .zhistory
 .aws/config
 ```
+
+Also, add the `git scripts` into /usr/local/bin/

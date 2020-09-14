@@ -122,7 +122,12 @@ alias .....='cd ../../../..'
 alias k='kubectl'
 alias cc-awsokta='eval "$(aws-okta-rakuten env commerce-capture-qa --session-ttl=8h0m0s)"'
 alias ss-awsokta='eval "$(aws-okta-rakuten env support-nonprod --session-ttl=1h0m0s)"'
+alias ss-prod-awsokta='eval "$(aws-okta-rakuten env support-prod --session-ttl=1h0m0s)"'
+alias eb-awsokta='eval "$(aws-okta-rakuten env ebates-nonprod --session-ttl=8h0m0s)"'
 alias rrssh='sshpass -e ssh '
+alias ssb='sshpass -f ~/.sshpassbastion ssh engbastion01.support.rr.local'
+alias kubectx='kubectl config use-context $(kubectl config get-contexts -o=name | sort -n | fzf)'
+alias kubens='kubectl config set-context $(kubectl config current-context) --namespace=$(kubectl get namespaces -o=jsonpath='"'"'{range .items[*].metadata.name}{@}{"\n"}{end}'"'"' | fzf)'
 
 # keybinds
 fuzzy_git_branch_widget() fuzzy_git_branch
