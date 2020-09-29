@@ -9,3 +9,7 @@ The list of files is as follows:
 ```
 
 Also, add the `git scripts` into /usr/local/bin/
+
+# Configure fzf
+
+Run `$(brew --prefix)/opt/fzf/install`
