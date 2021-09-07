@@ -32,6 +32,18 @@ Plug 'airblade/vim-gitgutter'
 Plug 'adelarsq/vim-matchit'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
+Plug 'lepture/vim-velocity'
+Plug 'darrikonn/vim-gofmt', { 'do': ':GoUpdateBinaries' }
+" java formatter
+" Add maktaba and codefmt to the runtimepath.
+" (The latter must be installed before it can be used.)
+Plug 'google/vim-maktaba'
+Plug 'google/vim-codefmt'
+" Java autocomplete
+Plug 'artur-shaik/vim-javacomplete2'
+" Also add Glaive, which is used to configure codefmt's maktaba flags. See
+" `:help :Glaive` for usage.
+Plug 'google/vim-glaive'
 " Plug 'christoomey/vim-sort-motion'
 " Plug 'christoomey/vim-tmux-runner'
 " Plug 'mattn/emmet-vim'
@@ -44,6 +56,14 @@ Plug 'vim-airline/vim-airline-themes'
 " Initialize plugin system
 call plug#end()
 " }}}
+
+call glaive#Install()
+" " Optional: Enable codefmt's default mappings on the <Leader>= prefix.
+" Glaive codefmt plugin[mappings]
+Glaive codefmt google_java_executable="/usr/local/Cellar/openjdk/15.0.2/bin/java -jar /Users/tomas.henriquez/.vim/google-java-format-1.9-all-deps.jar"
+autocmd FileType java setlocal omnifunc=javacomplete#Complete
+nmap <F4> <Plug>(JavaComplete-Imports-AddSmart)
+imap <F4> <Plug>(JavaComplete-Imports-AddSmart)
 
 " base configurations ---- {{{
 filetype plugin indent on    " required
@@ -79,6 +99,10 @@ colorscheme BlackSea
 hi Search cterm=NONE ctermfg=grey ctermbg=yellow
 nnoremap <leader>' :nohlsearch<CR>
 syntax on
+
+" augroup autoformat_settings
+" autocmd FileType java AutoFormatBuffer google-java-format
+" augroup END
 
 " ctags conf
 set tags+=./tags;$HOME
@@ -149,6 +173,9 @@ nnoremap <silent> <leader>fc <ESC>/\v^[<=>]{7}( .*\|$)<CR>
 nnoremap <leader>gt :Git mergetool<cr>
 " }}}
 
+autocmd FileType java map <leader>i :FormatCode<CR>
+autocmd FileType go map <leader>i :GoFmt<CR> :GoImports<CR>
+
 " Python configs --- {{{
 set tabstop=2 softtabstop=2 shiftwidth=2 textwidth=999
 autocmd FileType python setlocal tabstop=4 softtabstop=4 shiftwidth=4 textwidth=999
@@ -159,7 +186,7 @@ autocmd FileType python map <leader>i :Isort<CR> :Black<CR>
 let g:black_linelength = 119
 autocmd FileType python map <buffer> <C-z> :normal Oimport ipdb; ipdb.set_trace()<Esc>:w<CR>
 autocmd FileType python imap <buffer> <C-z> import ipdb; ipdb.set_trace()<Esc>
-autocmd FileType python nnoremap <F6> :!ctags -R --exclude=static --python-kinds=-i * && ctags -R --python-kinds=-i -a $VIRTUAL_ENV/lib/python3.8/site-packages/django/*<CR>
+autocmd FileType python nnoremap <F6> :!ctags -R --exclude=static --python-kinds=-i * && ctags -R --python-kinds=-i -a $VIRTUAL_ENV/lib/python3.9/site-packages/django/*<CR>
 " }}}
 
 " Rust configs ---- {{{
@@ -173,6 +200,14 @@ autocmd FileType rust map <leader>i :RustFmt<CR>
 autocmd FileType vue setlocal tabstop=4 softtabstop=4 shiftwidth=4 textwidth=999
 autocmd FileType javascript.jsx setlocal tabstop=4 softtabstop=4 shiftwidth=4 textwidth=999
 " }}}
+
+" java configuraiton
+" autocmd FileType java setlocal foldmethod=expr foldexpr=getline(v:lnum)=~'^\\s*//'
+augroup filetype_java
+    autocmd!
+    let b:codefmt_auto_format_buffer=0
+    autocmd FileType java :set fmr=/**,*/ fdm=marker fdc=1
+augroup END
 
 " set spelling on by default for typical doc files ---- {{{
 augroup spellcheck_documentation
@@ -264,12 +299,16 @@ map <C-F> :Rg
 map <leader>p :set paste<CR><esc>"*]p:set nopaste<cr>
 
 " Ale configs ---- {{{
+" To deactivate java linter
+let g:ale_java_checkstyle_config="~/checkstyle-checker.xml"
 let g:ale_linters = {
 \   'python': ['flake8'],
 \   'rust': ['cargo'],
-\   'java': [''],
+\   'go': ['gopls', 'staticcheck', 'govet'],
+\   'java': ['checkstyle', 'javac'],
 \}
-let g:ale_fixers = {'python': ['isort', 'black']}
+let g:ale_go_staticcheck_lint_package=1
+let g:ale_fixers = {'python': ['isort', 'black'], 'go': ['gofmt']}
 let g:ale_echo_msg_format = '%linter% says %s'
 " let g:ale_python_flake8_executable = $VIRTUALENV . 'bin/flake8'
 " let g:ale_python_pylint_executable = $VIRTUALENV . 'bin/pylint'
@@ -282,6 +321,7 @@ autocmd FileType ruby map <buffer> <C-z> :normal Irequire 'pry-byebug'; binding.
 autocmd FileType ruby imap <buffer> <C-z> require 'pry-byebug'; binding.pry<Esc>
 autocmd FileType go map <buffer> <C-z> :normal runtime.Breakpoint()<Esc>:w<CR>
 autocmd FileType go imap <buffer> <C-z> runtime.Breakpoint()<Esc>
+autocmd FileType go :set fmr=/**,*/ fdm=marker fdc=1
 
 " map to auto format json
 "map <C-j> :%!python -m json.tool
@@ -290,7 +330,7 @@ map <leader>z :normal I{% load dashboard_tpl_tags %} {{CHANGEME\|pdb}}<Esc>
 imap <leader>z {% load dashboard_tpl_tags %} {{CHANGEME\|pdb}}
 map <leader>s :normal Idebugger;<Esc>
 imap <leader>s debugger;
-map <C-c> :sp $VIRTUAL_ENV/lib/python3.8/site-packages/<CR>
+map <C-c> :sp $VIRTUAL_ENV/lib/python3.9/site-packages/<CR>
 
 "let g:vim_json_warnings=0
 
@@ -321,8 +361,7 @@ autocmd FileType python let g:VtrAppendNewline = 1
 let g:gundo_prefer_python3 = 1
 nnoremap <F3> :GundoToggle<CR>
 
-autocmd FileType go,java nnoremap <F6> :!ctags -R *<CR>
-autocmd FileType javascript,vue nnoremap <F6> :!ctags -R --exclude=node_modules --exclude=dist *<CR>
+nnoremap <F6> :!ctags -R --exclude=node_modules --exclude=dist --exclude=static *<CR>
 
 nnoremap <F9> :vsplit $MYVIMRC<CR>
 nnoremap <F10> :so $MYVIMRC<CR>
@@ -334,6 +373,7 @@ let g:gist_open_browser_after_post = 1
 " autocmd FileType python let easytest_django_nose_syntax = 1
 autocmd FileType python let easytest_django_syntax = 1
 autocmd FileType ruby let easytest_ruby_syntax = 1
+autocmd FileType go let easytest_go_syntax = 1
 nnoremap <S-t> :py3 run_current_test()<CR>
 nnoremap <C-t> :py3 run_current_class()<CR>
 " nnoremap <S-F> :py run_current_file()<CR>
