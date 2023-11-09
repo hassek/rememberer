@@ -4,12 +4,13 @@
 	name = Tomas Henriquez (Hassek)
 	email = nullwriter@gmail.com
 [core]
-	editor = /usr/local/bin/vim
+	editor = /opt/homebrew/bin/vim
 	excludesfile = /Users/thenriquez/.gitignore_global
 [github]
 	user = hassek
 [push]
 	default = simple
+  autoSetupRemote = true
 [merge]
   ff = only
 [fetch]
@@ -19,8 +20,9 @@
 [alias]
   aa = add --all
   br = branch
-  bprune = git branch --merged | grep -v "master" | xargs -I{} git branch -d {}
-  brprune = git branch -r --merged | grep -v "master" | sed -e "s/origin\\///" | xargs -I{} git push origin :{}
+  pbr = "!fzf_func() { git branch | fzf | xargs -I{} git checkout {};}; fzf_func"
+  bprune = branch --merged | grep -v "main" | xargs -I{} git branch -d {}
+  brprune = branch -r --merged | grep -v "main" | sed -e "s/origin\\///" | xargs -I{} git push origin :{}
   branches = for-each-ref --sort=-committerdate --format=\"%(color:red)%(authorname)\t%(color:white)%(color:bold)%(refname:short)\t%(color:blue)%(authordate:relative)\" refs/remotes
   browse = !hub browse
   ca = "!git add --all && git commit --amend --no-edit"
@@ -45,8 +47,8 @@
 	abbrevCommit = true
 [format]
 	pretty = oneline
-[diff "sopsdiffer"]
-	textconv = sops -d
+; [url "https://git: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@github.com/rewards-guilds/"]
+; 	insteadOf = https://github.com/rewards-guilds/
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [pull]
