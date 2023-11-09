@@ -11,7 +11,7 @@ Plug 'christoomey/vim-tmux-navigator'
 Plug 'direnv/direnv'
 Plug 'fisadev/vim-isort'
 Plug 'flazz/vim-colorschemes'
-" Plug 'hassek/vim-easytest'
+Plug 'hassek/vim-easytest'
 Plug 'jremmen/vim-ripgrep'
 Plug 'sjl/gundo.vim'
 Plug 'tpope/vim-commentary'
@@ -373,7 +373,7 @@ autocmd FileType python let g:VtrAppendNewline = 1
 let g:gundo_prefer_python3 = 1
 let g:vim_isort_python_version = 'python3'
 nnoremap <F3> :GundoToggle<CR>
-let g:black_use_virtualenv = 0
+let g:black_use_virtualenv = 1
 
 nnoremap <F6> :!ctags -R --exclude=node_modules --exclude=dist --exclude=static *<CR>
 
